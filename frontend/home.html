@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Pandeyji Fast Food</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+
+<header>
+    <nav>
+        <a href="#home">HOME</a> |
+        <a href="#menu">MENU</a> |
+        <a href="#location">LOCATION</a> |
+        <a href="#aboutus">ABOUT US</a> |
+        <a href="#contactus">CONTACT US</a>
+    </nav>
+</header>
+
+<section id="home">
+    <img src="banner.jpg" alt="Restaurant Banner">
+</section>
+
+<section id="menu">
+    <h2>Our Menu</h2>
+    <div class="grid-container">
+        <img src="menu1.jpg" alt="Menu item 1">
+        <img src="menu2.jpg" alt="Menu item 2">
+        <img src="menu3.jpg" alt="Menu item 3">
+    </div>
+</section>
+
+<section id="location">
+    <h2>Location</h2>
+    <p>38 Patli Gali, Mumbai</p>
+</section>
+
+<section id="aboutus">
+    <h2>About Us</h2>
+    <p>Welcome to Pandeyji Eatery — serving delicious Indian fast food!</p>
+</section>
+
+<section id="contactus">
+    <h2>Contact Us</h2>
+    <p>Call +91791234567 or email info@atliqfastfood.com</p>
+</section>
+
+</div>
+
+<!-- Dialogflow Messenger -->
+<script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+
+<df-messenger
+  chat-title="Food Order Bot"
+  agent-id="d6c0ae5c-5379-423f-a2fe-b2043023d431"
+  language-code="en">
+</df-messenger>
+
+</body>
+</html>
