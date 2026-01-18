@@ -136,4 +136,9 @@ Bot: Your order is in progress
 ✔ Order ID generated  
 ✔ Order tracking works  
 
+---
+
+⚠️ Note:
+- This project runs in demo mode on cloud when MySQL is unavailable.
+- In production, MySQL handles real order storage and auto-increment IDs.
 
