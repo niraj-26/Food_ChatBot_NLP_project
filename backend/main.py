@@ -9,7 +9,7 @@ app = FastAPI()
 in_progress_orders = {}
 
 
-@app.post("/")
+@app.post("/webhook")
 async def handle_request(request: Request):
 
     try:
@@ -65,6 +65,9 @@ async def handle_request(request: Request):
 def save_to_db(order: dict):
     next_order_id = db_helper.get_next_order_id()
 
+    if next_order_id is None:
+        next_order_id = 1001
+
     for food_item, quantity in order.items():
         code = db_helper.insert_order_item(food_item, quantity, next_order_id)
 
@@ -80,7 +83,7 @@ def save_to_db(order: dict):
 # COMPLETE ORDER
 # ==========================
 def complete_order(_: dict, session_id: str):
-
+    print("🔥 COMPLETE ORDER HIT 🔥", session_id)
     if session_id not in in_progress_orders:
         return JSONResponse(content={
             "fulfillmentText": "I cannot find your order. Please place a new order."
