@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import db_helper
 import generic_helper
+import time
 
 app = FastAPI()
 
@@ -65,8 +66,9 @@ async def handle_request(request: Request):
 def save_to_db(order: dict):
     next_order_id = db_helper.get_next_order_id()
 
-    if next_order_id is None:
-        next_order_id = 1001
+    # Demo / cloud mode fallback
+    if not next_order_id:
+        next_order_id = int(time.time()) % 100000  # unique demo order id
 
     for food_item, quantity in order.items():
         code = db_helper.insert_order_item(food_item, quantity, next_order_id)
@@ -77,6 +79,7 @@ def save_to_db(order: dict):
     db_helper.insert_order_tracking(next_order_id, "in progress")
 
     return next_order_id
+
 
 
 # ==========================
