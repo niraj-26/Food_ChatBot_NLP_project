@@ -1,15 +1,40 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+import os
+import time
+
 import db_helper
 import generic_helper
-import time
 
 app = FastAPI()
 
-# store active user orders
+# =====================================================
+# FRONTEND (WEBSITE) SETUP
+# =====================================================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
+
+# Serve static files (css + images)
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_home():
+    """Serve website in browser"""
+    with open(os.path.join(FRONTEND_DIR, "home.html"), "r", encoding="utf-8") as f:
+        return f.read()
+
+
+# =====================================================
+# IN-MEMORY ORDER STORE
+# =====================================================
 in_progress_orders = {}
 
 
+# =====================================================
+# DIALOGFLOW WEBHOOK (POST ONLY)
+# =====================================================
 @app.post("/webhook")
 async def handle_request(request: Request):
     try:
@@ -25,7 +50,7 @@ async def handle_request(request: Request):
                 "fulfillmentText": "Sorry, I could not detect your intent."
             })
 
-        # ✅ SAFER session extraction
+        # Extract session_id safely
         session_id = None
         for ctx in output_contexts:
             if "sessions" in ctx.get("name", ""):
@@ -37,6 +62,7 @@ async def handle_request(request: Request):
                 "fulfillmentText": "Session not found. Please try again."
             })
 
+        # Intent → function mapping (names MUST match Dialogflow)
         intent_handler_dict = {
             "new.order": start_new_order,
             "order.add - context: ongoing-order": add_to_order,
@@ -53,15 +79,15 @@ async def handle_request(request: Request):
         return intent_handler_dict[intent](parameters, session_id)
 
     except Exception as e:
-        print("🔥 WEBHOOK ERROR:", e)
+        print("WEBHOOK ERROR:", e)
         return JSONResponse(content={
             "fulfillmentText": "Internal server error occurred. Please try again later."
         })
 
 
-# ==========================
+# =====================================================
 # NEW ORDER
-# ==========================
+# =====================================================
 def start_new_order(_: dict, session_id: str):
     in_progress_orders[session_id] = {}
     return JSONResponse(content={
@@ -74,9 +100,9 @@ def start_new_order(_: dict, session_id: str):
     })
 
 
-# ==========================
-# DB SAVE FUNCTION
-# ==========================
+# =====================================================
+# SAVE ORDER (DB / DEMO MODE)
+# =====================================================
 def save_to_db(order: dict):
     next_order_id = db_helper.get_next_order_id()
 
@@ -93,9 +119,9 @@ def save_to_db(order: dict):
     return next_order_id
 
 
-# ==========================
+# =====================================================
 # COMPLETE ORDER
-# ==========================
+# =====================================================
 def complete_order(_: dict, session_id: str):
     if session_id not in in_progress_orders:
         return JSONResponse(content={
@@ -106,10 +132,10 @@ def complete_order(_: dict, session_id: str):
     order_id = save_to_db(order)
 
     if order_id == -1:
-        fulfillment_text = "❌ Failed to place order. Please try again."
+        text = "❌ Failed to place order. Please try again."
     else:
         total = db_helper.get_total_order_price(order_id)
-        fulfillment_text = (
+        text = (
             f"🎉 Order placed successfully!\n"
             f"🆔 Order ID: {order_id}\n"
             f"💰 Total: ₹{total}\n"
@@ -117,13 +143,12 @@ def complete_order(_: dict, session_id: str):
         )
 
     del in_progress_orders[session_id]
+    return JSONResponse(content={"fulfillmentText": text})
 
-    return JSONResponse(content={"fulfillmentText": fulfillment_text})
 
-
-# ==========================
+# =====================================================
 # ADD TO ORDER
-# ==========================
+# =====================================================
 def add_to_order(parameters: dict, session_id: str):
     food_items = parameters.get("food-item", [])
     quantities = parameters.get("number", [])
@@ -145,9 +170,9 @@ def add_to_order(parameters: dict, session_id: str):
     })
 
 
-# ==========================
+# =====================================================
 # REMOVE FROM ORDER
-# ==========================
+# =====================================================
 def remove_from_order(parameters: dict, session_id: str):
     if session_id not in in_progress_orders:
         return JSONResponse(content={
@@ -171,9 +196,9 @@ def remove_from_order(parameters: dict, session_id: str):
     })
 
 
-# ==========================
+# =====================================================
 # TRACK ORDER
-# ==========================
+# =====================================================
 def track_order(parameters: dict, session_id: str):
     try:
         order_id = int(parameters.get("order_id") or parameters.get("number"))
